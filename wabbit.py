@@ -7,10 +7,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 startTime = time.monotonic()
+version = "v1.1"
 
-parser = argparse.ArgumentParser(description="Wabbit v1.0, network and port scanning tool")
-parser.add_argument("target", help="Target IP/URL \nThe URL e.g www.example.com\n or the IP Address e.g 127.0.0.1 of the target")
-
+parser = argparse.ArgumentParser(description=f"Wabbit {version}, network and port scanning tool")
+parser.add_argument("target", help="Target IP/URL \nThe URL e.g www.example.com\n or the IP Address e.g 127.0.0.1 of the target\nUse 'self' for scanning connected network")
 parser.add_argument("-p", "--port", type=int, help="Specific port to scan e.g 43")
 parser.add_argument("-o", "--output",default=False, action="store_true", help="Saves open ports in a text file")
 parser.add_argument("-r", "--range", type=int, default=1024, help="Scans from 1 to the set range (max 65535)\n Default is 1024")
@@ -25,28 +25,43 @@ target = args.target
 res = ""
 availablePorts = []
 
-def verifyTarget(addr):
-    global target
-    if reg.fullmatch(addr):
-        if addr[len(addr)-1] == "/":
-            host = addr.replace("https://", "").replace("http://", "").strip("/")
-        else:
-            host = addr.replace("https://", "").replace("http://", "")
-        try:
-            target = socket.gethostbyname(host)
-        except socket.gaierror:
-            print("[-] Could not resolve hostname")
-            return
-        except Exception as e:
-            print(f"[-] Error occured: {e}")
-            return
-    else:
-        try:
-            ipaddress.ip_address(addr)
-        except ValueError:
-            print("[-] Invalid IP Address")
-            return
+ip = ""
 
+def verifyTarget(addr):
+    global target, ip
+    if args.target != "self":
+        if reg.fullmatch(addr):
+            if addr[len(addr)-1] == "/":
+                host = addr.replace("https://", "").replace("http://", "").strip("/")
+            else:
+                host = addr.replace("https://", "").replace("http://", "")
+            try:
+                target = socket.gethostbyname(host)
+            except socket.gaierror:
+                print("[-] Could not resolve hostname")
+                return
+            except Exception as e:
+                print(f"[-] Error occured: {e}")
+            return
+        else:
+            try:
+                ipaddress.ip_address(addr)
+            except ValueError:
+                print("[-] Invalid IP Address")
+                return
+    else:
+        v = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            v.connect(('8.8.8.8',80))
+            ip = v.getsockname()[0]
+            print(f"[+] Network address is {ip}")
+            target = ip
+        except Exception as e:
+            print(f"[-] Error : {e}")
+        finally:
+            v.close()
+
+    
 def isIP(addr):
     try:
         ipaddress.ip_address(addr)
@@ -170,6 +185,8 @@ def singleScan(port):
     finally:
         s.close()    
 
+print(f"==============  Wabbit {version}  ==============\n")
+
 verifyTarget(target)
 if isIP(target):
     if args.range > 65535:
@@ -190,10 +207,12 @@ if isIP(target):
 
 if args.output:
     f = open("found_ports.txt",'w')
-    f.write(f"======Wabbit v1.0======")
+    f.write(f"======Wabbit {version}======\n")
     if len(availablePorts)>0:
         for i in range(len(availablePorts)):
             f.write(f"\n{target}:{availablePorts[i]}")
+        f.write(f"\n\n[+] Scanned {args.range} ports, found {len(availablePorts)} open")
+        f.write(f"\n[+] Scanned {args.range} ports in {elapsed:.4f}s")
     else:
         f.write("No open ports  :(")
     f.close()
