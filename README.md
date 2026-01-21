@@ -1,4 +1,4 @@
-Wabbit v1.0
+Wabbit v1.1
 by Trim 
 
 STILL UNDER DEVELOPMENT
@@ -13,11 +13,12 @@ Scans 1024 ports in less than 6s with timeouts
 
 usage: wabbit.py [-h] [-p PORT] [-o] [-r RANGE] [-O] [-t] target
 
-Wabbit v1.0, network and port scanning tool
+Wabbit v1.1, network and port scanning tool
 
 positional arguments:
   target             Target IP/URL The URL e.g www.example.com or the IP
-                     Address e.g 127.0.0.1 of the target
+                        Address e.g 127.0.0.1 of the target
+                        Use 'self' for scanning current connected network 
 
 options:
   -h, --help         show this help message and exit
@@ -26,3 +27,8 @@ options:
   -r, --range RANGE  Scans from 1 to the set range (max 65535) Default is 1024   
   -O, --onlyopen     Ouput only open ports
   -t, --threading    Make use of threading, less stealthier
+
+
+  LOG
+  - Added ability to scan internal networks
+  - Changed parts of code to be more efficient
